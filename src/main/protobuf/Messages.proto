@@ -1,12 +1,23 @@
-option java_package = "nl.ypmania.spark.data";
+syntax = "proto3";
+
+option java_package = "nl.ypmania.sparkmqtt.data";
 
 message Packet {
-  optional uint32 nodeId = 1;
-  optional uint32 seq = 2;
-  optional bytes body = 3;
+    uint32 nodeId = 1;
+    uint32 seq = 2;
+    bytes body = 3;
 }
 
 message Ack {
-  optional uint32 nodeId = 1;
-  optional uint32 seq = 2;
+    uint32 nodeId = 1;
+    uint32 seq = 2;
+}
+
+message Ping {
+    bytes macAddress = 1;
+    uint32 seq = 2;
+    uint32 packetsOut = 3;
+    uint32 packetsIn = 4;
+    uint32 rfmWatchdogs = 5;
+    uint32 espWatchdogs = 6;
 }

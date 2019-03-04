@@ -3,9 +3,13 @@ package nl.ypmania.sparkmqtt
 import akka.actor.{ Actor, ActorLogging, ActorRef, Timers }
 import akka.http.scaladsl.model.Uri.Path
 import scala.concurrent.duration._
+import MQTTActor.Topic
 
-class FS20Forwarder(mqttActor: ActorRef) extends Actor with Timers with ActorLogging {
-  import FS20Forwarder._
+/**
+  * Forwards radio-received FS20 messages (indicating device "state") into MQTT, as a notification.
+  */
+class FS20StateForwarder(mqttActor: ActorRef) extends Actor with Timers with ActorLogging {
+  import FS20StateForwarder._
 
   private var seen = Set.empty[FS20.Packet]
 
@@ -26,14 +30,14 @@ class FS20Forwarder(mqttActor: ActorRef) extends Actor with Timers with ActorLog
   private def forward(packet: FS20.Packet): Unit = {
     val topic = topicFor(packet.address)
     log.debug("Forwarding {} to {}", packet, topic)
-    mqttActor ! MQTTActor.Message(topic / "command", packet.command.toString)
+    mqttActor ! MQTTActor.Message(topic, packet.command.toString)
   }
 
-  private def topicFor(address: FS20.Address): Path = {
-    Path("fs20") / address.houseCode / address.deviceCode
+  private def topicFor(address: FS20.Address): Topic = {
+    Topic("fs20") / "state" / address.houseCode / address.deviceCode
   }
 }
 
-object FS20Forwarder {
+object FS20StateForwarder {
   private case class Unsee(packet: FS20.Packet)
 }
