@@ -34,7 +34,7 @@ class FS20StateForwarder(mqttActor: ActorRef) extends Actor with Timers with Act
   }
 
   private def topicFor(address: FS20.Address): Topic = {
-    Topic("fs20") / "state" / address.houseCode / address.deviceCode
+    Topic./("fs20") / address.houseCode / address.deviceCode / "state"
   }
 }
 

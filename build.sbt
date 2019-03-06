@@ -1,8 +1,12 @@
+version := "0.1.20190306"
+
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.5.21",
   "com.typesafe.akka" %% "akka-slf4j" % "2.5.21",
   "com.typesafe.akka" %% "akka-testkit" % "2.5.21" % Test,
-  "ch.qos.logback" % "logback-classic" % "1.2.3",
+  "org.apache.logging.log4j" % "log4j-api" % "2.11.2",
+  "org.apache.logging.log4j" % "log4j-core" % "2.11.2",
+  "org.apache.logging.log4j" % "log4j-slf4j18-impl" % "2.11.2",
   "org.eclipse.paho" % "org.eclipse.paho.client.mqttv3" % "1.2.0",
   "com.typesafe.akka" %% "akka-http" % "10.1.7",
   "com.typesafe.akka" %% "akka-http-testkit" % "10.1.7" % Test,

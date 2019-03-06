@@ -45,7 +45,7 @@ class MQTTActor extends Actor with ActorLogging {
       log.debug("Subscribing {} to {}", sender.path, topicSpec)
       client.subscribe(topicSpec.name, new IMqttMessageListener {
         override def messageArrived(topic: String, message: MqttMessage): Unit = {
-          val msg = Message(Topic(topic), ByteString(message.getPayload), message.isRetained())
+          val msg = Message(Topic.parse(topic), ByteString(message.getPayload), message.isRetained())
           target.tell(msg, _self)
         }
       })
@@ -54,17 +54,18 @@ class MQTTActor extends Actor with ActorLogging {
 
 object MQTTActor {
 
-  case class Topic(name: String) {
-    def /(segment: String) = Topic(s"${name}/${URLEncoder.encode(segment,"UTF-8")}")
-    def /+ = Topic(s"${name}/+")
-    def /+/(segment: String) = Topic(s"${name}/+/${URLEncoder.encode(segment,"UTF-8")}")
-    def /# = Topic(s"${name}/#")
-    def segments: List[String] = name.split("/").toList
+  case class Topic(segments: Seq[String]) {
+    def /(segment: String) = Topic(segments :+ URLEncoder.encode(segment,"UTF-8"))
+    def /+ = Topic(segments :+ "+")
+    def /+/(segment: String) = Topic(segments :+ "+" :+ URLEncoder.encode(segment,"UTF-8"))
+    def /# = Topic(segments :+ "#")
+
+    def name = segments.mkString("/")
   }
   object Topic {
-    implicit def toTopic(s: String) = Topic(URLEncoder.encode(s, "UTF-8"))
-    def /(segment: String) = Topic(URLEncoder.encode(segment, "UTF-8"))
-    def wildcard = Topic("#")
+    def parse(s: String) = Topic(s.split("/").toSeq)
+    def /(segment: String) = Topic(Vector(URLEncoder.encode(segment, "UTF-8")))
+    def wildcard = Topic(Vector("#"))
   }
 
   case class Message(topic: Topic, data: ByteString, retained: Boolean = false)
