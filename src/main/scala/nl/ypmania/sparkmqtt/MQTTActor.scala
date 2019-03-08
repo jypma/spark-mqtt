@@ -61,6 +61,7 @@ object MQTTActor {
     def /# = Topic(segments :+ "#")
 
     def name = segments.mkString("/")
+    override def toString = s"Topic(${name})"
   }
   object Topic {
     def parse(s: String) = Topic(s.split("/").toSeq)

@@ -4,7 +4,7 @@ import akka.actor.{ Actor, ActorLogging, ActorRef, Timers }
 import akka.io.{ IO, Udp }
 import akka.util.ByteString
 import java.net.InetSocketAddress
-import data.Messages.{MaybePacket, MaybeAck, MaybePing}
+import data.Messages.{MaybePacket, MaybeAck, MaybePing, MaybeRoomsensor}
 import scala.concurrent.duration._
 
 class UdpServer extends Actor with ActorLogging with Timers {
@@ -32,6 +32,9 @@ class UdpServer extends Actor with ActorLogging with Timers {
       case Udp.Received(ReceivedAck(MaybeAck(ack)), _) =>
         log.info("Received Ack: {}", ack)
         context.system.eventStream.publish(ack)
+      case Udp.Received(ReceivedMessage(MaybeRoomsensor(msg)), _) =>
+        log.info("Received Roomsensor: {}", msg)
+        context.system.eventStream.publish(msg)
       case Udp.Received(ReceivedPing(MaybePing(ping)), src) =>
         val address = MAC(ByteString(ping.macAddress.toByteArray()))
         timers.startSingleTimer(ping.macAddress, RemoveProxy(address), 1.minute)
@@ -94,6 +97,7 @@ object UdpServer {
   private val ReceivedPacket = WithHeader('R',3) // Packet from node to spark. Spark to node has header 2.
   private val ReceivedAck = WithHeader('R',1)    // All ack have this header
   private val ReceivedPing = WithHeader('Q')
+  private val ReceivedMessage = WithHeader('R',42)
 
   private case class RemoveProxy(mac: MAC)
 }

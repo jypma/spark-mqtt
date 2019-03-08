@@ -1,23 +1,33 @@
-syntax = "proto3";
+syntax = "proto2";
 
 option java_package = "nl.ypmania.sparkmqtt.data";
 
 message Packet {
-    uint32 nodeId = 1;
-    uint32 seq = 2;
-    bytes body = 3;
+    required uint32 nodeId = 1;
+    required uint32 seq = 2;
+    optional bytes body = 3;
 }
 
 message Ack {
-    uint32 nodeId = 1;
-    uint32 seq = 2;
+    required uint32 nodeId = 1;
+    required  uint32 seq = 2;
 }
 
 message Ping {
-    bytes macAddress = 1;
-    uint32 seq = 2;
-    uint32 packetsOut = 3;
-    uint32 packetsIn = 4;
-    uint32 rfmWatchdogs = 5;
-    uint32 espWatchdogs = 6;
+    required bytes macAddress = 1;
+    optional uint32 seq = 2;
+    optional uint32 packetsOut = 3;
+    optional uint32 packetsIn = 4;
+    optional uint32 rfmWatchdogs = 5;
+    optional uint32 espWatchdogs = 6;
+}
+
+message RoomSensor {
+    required uint32 sender = 1;
+    optional uint32 seq = 8;
+    optional uint32 supply = 9;
+    optional int32 temp = 10;
+    optional uint32 humidity = 11;
+    optional uint32 lux = 12;
+    optional uint32 motion = 13;
 }

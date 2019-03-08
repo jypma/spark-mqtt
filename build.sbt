@@ -10,7 +10,8 @@ libraryDependencies ++= Seq(
   "org.eclipse.paho" % "org.eclipse.paho.client.mqttv3" % "1.2.0",
   "com.typesafe.akka" %% "akka-http" % "10.1.7",
   "com.typesafe.akka" %% "akka-http-testkit" % "10.1.7" % Test,
-  "com.github.os72" % "protobuf-dynamic" % "0.9.3"
+  "com.github.os72" % "protobuf-dynamic" % "0.9.3",
+  "org.json4s" %% "json4s-native" % "3.6.5"
 )
 
 scalaVersion := "2.12.8"
