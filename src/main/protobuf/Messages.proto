@@ -26,7 +26,7 @@ message RoomSensor {
     required uint32 sender = 1;
     optional uint32 seq = 8;
     optional uint32 supply = 9;
-    optional int32 temp = 10;
+    optional sint32 temp = 10;
     optional uint32 humidity = 11;
     optional uint32 lux = 12;
     optional uint32 motion = 13;

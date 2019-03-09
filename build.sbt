@@ -1,4 +1,4 @@
-version := "0.1.20190306"
+version := "0.1.20190308"
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.5.21",
