@@ -51,6 +51,7 @@ class RoomSensorForwarder(mqttActor: ActorRef) extends Actor with ActorLogging w
     val topic = /("homeassistant") / "sensor" / s"rf12_${id}_${top}" / "config"
     val config: JObject =
       ("name" -> s"RF12 ${id} ${dClass}") ~
+      ("unique_id" -> s"rf12_${id}_${dClass}") ~
       ("state_topic" -> (stateTopic(id) / top).name) ~
       ("device_class" -> dClass) ~
       ("unit_of_measurement" -> unit)
@@ -61,6 +62,7 @@ class RoomSensorForwarder(mqttActor: ActorRef) extends Actor with ActorLogging w
     val topic = /("homeassistant") / "binary_sensor" / s"rf12_${id}_${top}" / "config"
     val config: JObject =
       ("name" -> s"RF12 ${id} ${dClass}") ~
+      ("unique_id" -> s"rf12_${id}_${dClass}") ~
       ("state_topic" -> (stateTopic(id) / top).name) ~
       ("device_class" -> dClass) ~
       ("off_delay" -> 5) ~
