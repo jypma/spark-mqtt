@@ -47,10 +47,10 @@ class RoomSensorForwarder(mqttActor: ActorRef) extends Actor with ActorLogging w
 
   def stateTopic(id: Int) = /("rf12") / "roomsensor" / (id & 0xFF).toString
 
-  def registerSensor(id: Int, top: String, dClass: String, unit: String): Unit = {
+  def registerSensor(id: Int, top: String, dClass: String, unit: String, name: String): Unit = {
     val topic = /("homeassistant") / "sensor" / s"rf12_${id}_${top}" / "config"
     val config: JObject =
-      ("name" -> s"RF12 ${id} ${dClass}") ~
+      ("name" -> name) ~
       ("unique_id" -> s"rf12_${id}_${dClass}") ~
       ("state_topic" -> (stateTopic(id) / top).name) ~
       ("device_class" -> dClass) ~
@@ -58,10 +58,10 @@ class RoomSensorForwarder(mqttActor: ActorRef) extends Actor with ActorLogging w
     mqttActor ! MQTTActor.Message(topic, ByteString(pretty(render(config))), retained = true)
   }
 
-  def registerBinarySensor(id: Int, top: String, dClass: String): Unit = {
+  def registerBinarySensor(id: Int, top: String, dClass: String, name: String): Unit = {
     val topic = /("homeassistant") / "binary_sensor" / s"rf12_${id}_${top}" / "config"
     val config: JObject =
-      ("name" -> s"RF12 ${id} ${dClass}") ~
+      ("name" -> name) ~
       ("unique_id" -> s"rf12_${id}_${dClass}") ~
       ("state_topic" -> (stateTopic(id) / top).name) ~
       ("device_class" -> dClass) ~
@@ -76,11 +76,11 @@ class RoomSensorForwarder(mqttActor: ActorRef) extends Actor with ActorLogging w
     if (!haveRegistered.contains(id)) {
       log.info("registering {}", id)
 
-      registerSensor(id, "temperature", "temperature", "°C")
-      registerSensor(id, "humidity", "humidity", "%")
-      registerSensor(id, "supply", "battery", "V")
-      registerSensor(id, "lux", "illuminance", "lx")
-      registerBinarySensor(id, "motion", "motion")
+      registerSensor(id, "temperature", "temperature", "°C", "Temp.")
+      registerSensor(id, "humidity", "humidity", "%", "Humidity")
+      registerSensor(id, "supply", "battery", "V", "Battery")
+      registerSensor(id, "lux", "illuminance", "lx", "Illum.")
+      registerBinarySensor(id, "motion", "motion", "Motion")
 
       haveRegistered += id
     }
