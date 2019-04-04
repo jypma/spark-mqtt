@@ -55,7 +55,8 @@ class MQTTActor extends Actor with ActorLogging {
 object MQTTActor {
 
   case class Topic(segments: Seq[String]) {
-    def /(segment: String) = Topic(segments :+ URLEncoder.encode(segment,"UTF-8"))
+    def /(segment: String): Topic = Topic(segments :+ URLEncoder.encode(segment,"UTF-8"))
+    def /(segment: Int): Topic = /(segment.toString)
     def /+ = Topic(segments :+ "+")
     def /+/(segment: String) = Topic(segments :+ "+" :+ URLEncoder.encode(segment,"UTF-8"))
     def /# = Topic(segments :+ "#")
@@ -65,7 +66,8 @@ object MQTTActor {
   }
   object Topic {
     def parse(s: String) = Topic(s.split("/").toSeq)
-    def /(segment: String) = Topic(Vector(URLEncoder.encode(segment, "UTF-8")))
+    def /(segment: String): Topic = Topic(Vector(URLEncoder.encode(segment, "UTF-8")))
+    def /(segment: Int): Topic = /(segment.toString)
     def wildcard = Topic(Vector("#"))
   }
 

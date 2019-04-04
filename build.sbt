@@ -15,6 +15,7 @@ libraryDependencies ++= Seq(
 )
 
 scalaVersion := "2.12.8"
+scalacOptions ++= Seq("-feature")
 
 enablePlugins(JavaAppPackaging)
 enablePlugins(DockerPlugin)

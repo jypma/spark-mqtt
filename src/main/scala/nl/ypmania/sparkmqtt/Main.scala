@@ -9,4 +9,5 @@ object Main extends App {
   system.actorOf(Props(new FS20StateForwarder(mqttActor)))
   system.actorOf(Props(new FS20CommandForwarder(mqttActor, udpServer)))
   system.actorOf(Props(new RoomSensorForwarder(mqttActor)))
+  system.actorOf(Props(new LampForwarder(udpServer, mqttActor)))
 }

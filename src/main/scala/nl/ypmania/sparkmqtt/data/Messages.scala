@@ -18,6 +18,7 @@ package object Messages {
 object Protobuf {
   class MaybeProtobuf[A <: GeneratedMessage with Message[A]](t: GeneratedMessageCompanion[A], p: A => Boolean = all) {
     def unapply(bytes: ByteString): Option[A] = Try(t.parseFrom(bytes.toArray)).toOption.filter(p)
+    def unapply(bytes: com.google.protobuf.ByteString): Option[A] = Try(t.parseFrom(bytes.toByteArray)).toOption.filter(p)
   }
 
   def all[A]: A => Boolean = (a => true)

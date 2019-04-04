@@ -10,7 +10,7 @@ message Packet {
 
 message Ack {
     required uint32 nodeId = 1;
-    required  uint32 seq = 2;
+    required uint32 seq = 2;
 }
 
 message Ping {
@@ -30,4 +30,13 @@ message RoomSensor {
     optional uint32 humidity = 11;
     optional uint32 lux = 12;
     optional uint32 motion = 13;
+}
+
+message LampState {
+    optional uint32 brightness = 1;
+}
+
+message LampCommand {
+    optional uint32 on = 1;
+    optional uint32 brightness = 2;
 }
