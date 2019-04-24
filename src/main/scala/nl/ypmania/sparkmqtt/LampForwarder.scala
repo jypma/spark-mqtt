@@ -1,6 +1,6 @@
 package nl.ypmania.sparkmqtt
 
-import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
+import akka.actor.{ Actor, ActorLogging, ActorRef, Props, Timers }
 import akka.util.ByteString
 import nl.ypmania.sparkmqtt.data.Messages.{ Ack, LampCommand, Packet }
 import nl.ypmania.sparkmqtt.data.Protobuf.MaybeProtobuf
@@ -12,7 +12,9 @@ import org.json4s.JsonAST.JObject
 import org.json4s.JsonDSL._
 import org.json4s.native.JsonMethods._
 
-class LampForwarder(udpServer: ActorRef, mqttActor: ActorRef) extends Actor with ActorLogging {
+class LampForwarder(udpServer: ActorRef, mqttActor: ActorRef) extends Actor with ActorLogging with Timers {
+  import LampForwarder._
+
   val MaybeLampState = new MaybeProtobuf(LampState)
   val root = /("rf12") / "lamp"
 
@@ -51,7 +53,6 @@ class LampForwarder(udpServer: ActorRef, mqttActor: ActorRef) extends Actor with
       log.info("MQTT setting on: {}", on)
       commandActorFor(lampId) ! LampCommand(
         on = Some(if (on) 1 else 0))
-
   }
 
   def isLamp(nodeId: Int) = (nodeId >> 8) == 'l'
@@ -59,7 +60,6 @@ class LampForwarder(udpServer: ActorRef, mqttActor: ActorRef) extends Actor with
   def stateActorFor(nodeId: Int): ActorRef = {
     val name = s"state-${nodeId & 0xFF}"
     context.child(name).getOrElse {
-      // TODO register in home assistant here
       context.actorOf(Props(new RxState(LampState)(nodeId, udpServer)), name)
     }
   }
@@ -101,5 +101,5 @@ class LampForwarder(udpServer: ActorRef, mqttActor: ActorRef) extends Actor with
 }
 
 object LampForwarder {
-
+  case class Remove(nodeId: Int)
 }

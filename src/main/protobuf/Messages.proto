@@ -32,6 +32,13 @@ message RoomSensor {
     optional uint32 motion = 13;
 }
 
+message DoorSensor {
+    required uint32 sender = 1;
+    optional uint32 seq = 8;
+    optional uint32 supply = 9;
+    optional uint32 open = 10;
+}
+
 message LampState {
     optional uint32 brightness = 1;
 }
@@ -39,4 +46,13 @@ message LampState {
 message LampCommand {
     optional uint32 on = 1;
     optional uint32 brightness = 2;
+}
+
+message HeaterState {
+    optional uint32 values = 1;
+}
+
+message HeaterCommand {
+    optional uint32 turnOn = 1;
+    optional uint32 turnOff = 2;
 }

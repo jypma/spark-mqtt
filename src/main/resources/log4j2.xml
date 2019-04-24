@@ -8,7 +8,7 @@
   </Appenders>
   <Loggers>
     <Logger name="akka" level="info" />
-    <Logger name="nl.ypmania.sparkmqtt.UdpServer" level="info" />
+    <Logger name="nl.ypmania.sparkmqtt.UdpServer" level="debug" />
     <Root level="debug" additivity="false">
       <AppenderRef ref="console" />
     </Root>

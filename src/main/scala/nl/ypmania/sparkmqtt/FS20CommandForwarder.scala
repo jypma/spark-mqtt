@@ -9,7 +9,7 @@ import akka.http.scaladsl.server.PathMatchers._
 import MQTTActor.Topic
 import MQTTActor.Topic._
 import FS20.fromCode
-import UdpServer.{MAC, Send}
+import UdpServer.{MAC, SendFS20}
 import akka.util.ByteString
 import scala.concurrent.duration._
 
@@ -22,7 +22,7 @@ class FS20CommandForwarder(mqttActor: ActorRef, udpServer: ActorRef) extends Act
 
   private def send(packet: FS20.Packet, mac: MAC): Unit = {
     log.debug("Command to set {} to {} through {}", packet.address, packet.command, mac)
-    udpServer ! Send(mac, packet)
+    udpServer ! SendFS20(mac, packet)
     timers.startSingleTimer(packet.address, Repeat(3, mac, packet), repeatInterval)
   }
 
@@ -43,7 +43,7 @@ class FS20CommandForwarder(mqttActor: ActorRef, udpServer: ActorRef) extends Act
       send(FS20.Packet(address, command), mac)
 
     case msg@Repeat(n, mac, packet) =>
-      udpServer ! Send(mac, packet)
+      udpServer ! SendFS20(mac, packet)
 
       if (n > 0) {
         timers.startSingleTimer(packet.address, msg.again, repeatInterval)

@@ -1,0 +1,11 @@
+[Unit]
+Description=Make sound effects on MQTT
+
+[Service]
+WorkingDirectory=/home/pi/sfx
+ExecStart=/home/pi/sfx/listen
+Type=simple
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

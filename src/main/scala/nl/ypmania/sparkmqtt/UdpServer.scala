@@ -4,7 +4,7 @@ import akka.actor.{ Actor, ActorLogging, ActorRef, Timers }
 import akka.io.{ IO, Udp }
 import akka.util.ByteString
 import java.net.InetSocketAddress
-import data.Messages.{MaybePacket, MaybeAck, MaybePing, MaybeRoomsensor}
+import data.Messages.{MaybePacket, MaybeAck, MaybePing, MaybeRoomsensor, MaybeDoorSensor }
 import nl.ypmania.sparkmqtt.data.Messages.{ Ack, Packet }
 import scala.collection.immutable.HashSet
 import scala.concurrent.duration._
@@ -68,6 +68,10 @@ class UdpServer extends Actor with ActorLogging with Timers {
         log.info("Received Roomsensor: {}", msg)
         context.system.eventStream.publish(msg)
       }
+      case Udp.Received(ReceivedMessage(MaybeDoorSensor(msg)), src) => incoming(msg, src) {
+        log.info("Received DoorSensor: {}", msg)
+        context.system.eventStream.publish(msg)
+      }
       case Udp.Received(ReceivedPing(MaybePing(ping)), src) =>
         val address = MAC(ByteString(ping.macAddress.toByteArray()))
         timers.startSingleTimer(ping.macAddress, RemoveProxy(address), 1.minute)
@@ -76,8 +80,21 @@ class UdpServer extends Actor with ActorLogging with Timers {
           log.info("Received Ping from {} at {}:{}, seen {}", address, src.getHostName, src.getPort,
             proxies.values.map(_.getHostName).mkString(", "))
         }
+
+      // TODO re-flash doorbell as a normal TxState "momentary button" class
+      case Udp.Received(ReceivedDoorbell(body), src) =>
+        // don't de-duplicate, the old protocol relies on retransmit to get more ack's
+        log.info("Received doorbell: {}", body)
+        preferProxy(0xFFFF, src)
+        context.system.eventStream.publish(Doorbell(body))
+      case SendDoorbell(body) if preferredProxies.contains(0xFFFF) =>
+        for (addr <- preferredProxies(0xFFFF)) {
+          socket ! Udp.Send(ByteString('R', 1, 'S', 'P', 'D', 'B') ++ body, addr)
+        }
+      case msg@SendDoorbell =>
+        log.warning("Not sending {} to doorbell, since no proxy known for it", msg)
       case Udp.Received(data, remote) =>
-        log.debug("Got {} unhandled bytes from {}", data.size, remote)
+        log.debug("Unhandled {} from {}", data, remote)
       case Udp.Unbind  ⇒ socket ! Udp.Unbind
       case Udp.Unbound ⇒ context.stop(self)
 
@@ -85,9 +102,13 @@ class UdpServer extends Actor with ActorLogging with Timers {
         log.info("Removing proxy at {}", address)
         proxies -= address;
 
-      case Send(mac, payload) if proxies.contains(mac) =>
+      case SendFS20(mac, packet) if proxies.contains(mac) =>
+        val payload = 'F'.toByte +: packet.toByteString
         log.info("Sending {} bytes to {}", payload.length, proxies(mac).getHostName)
         socket ! Udp.Send(payload, proxies(mac))
+      case msg:SendFS20 =>
+        log.warning("Not sending {}, since proxy is not available", msg)
+
       case SendAck(ack) if preferredProxies.contains(ack.nodeId) =>
         val addr = randomProxy(ack.nodeId)
         log.debug("Sending {} ({}) to {} at {}", ack, ByteString(ack.toByteArray), proxies.find {  case (mac,a) => a == addr }.map(_._1), addr)
@@ -141,13 +162,12 @@ object UdpServer {
     }
   }
 
-  case class Send (mac: MAC, payload: ByteString)
   case class SendAck(ack: Ack)
   case class SendPacket(packet: Packet)
+  case class SendFS20(mac: MAC, packet: FS20.Packet)
+  case class SendDoorbell(body: ByteString)
 
-  object Send {
-    def apply(mac: MAC, packet: FS20.Packet): Send = Send(mac, 'F'.toByte +: packet.toByteString)
-  }
+  case class Doorbell(body: ByteString)
 
   private case class WithHeader(header: Byte*) {
     val prefix = ByteString(header: _*)
@@ -163,6 +183,7 @@ object UdpServer {
   private val ReceivedAck = WithHeader('R',1)    // Ack from node to spark. Spark to node has header 5.
   private val ReceivedPing = WithHeader('Q')
   private val ReceivedMessage = WithHeader('R',42)
+  private val ReceivedDoorbell = WithHeader('R',2,'D','B',' ',' ')
 
   private case class RemoveProxy(mac: MAC)
   private case class RemovePreferred(nodeId: Int, addr: InetSocketAddress)

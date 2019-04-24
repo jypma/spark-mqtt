@@ -4,7 +4,7 @@ import akka.util.ByteString
 import com.github.os72.protobuf.dynamic.{ DynamicSchema, MessageDefinition }
 import com.google.protobuf.{ DynamicMessage }
 import scala.util.Try
-import nl.ypmania.sparkmqtt.data.Messages.{Packet,Ack,Ping,RoomSensor}
+import nl.ypmania.sparkmqtt.data.Messages.{Packet,Ack,Ping,RoomSensor,DoorSensor}
 import scalapb.{ GeneratedMessage, GeneratedMessageCompanion, Message }
 
 package object Messages {
@@ -13,6 +13,7 @@ package object Messages {
   val MaybeAck = new MaybeProtobuf(Ack)
   val MaybePing = new MaybeProtobuf(Ping)
   val MaybeRoomsensor = new MaybeProtobuf(RoomSensor, (r:RoomSensor) => (r.sender >> 8) == 'Q')
+  val MaybeDoorSensor = new MaybeProtobuf(DoorSensor, (r:DoorSensor) => (r.sender >> 8) == 'd')
 }
 
 object Protobuf {
