@@ -5,7 +5,7 @@ Description=Make sound effects on MQTT
 WorkingDirectory=/home/pi/sfx
 ExecStart=/home/pi/sfx/listen
 Type=simple
-Restart=on-failure
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
