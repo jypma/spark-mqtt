@@ -13,6 +13,8 @@ import scala.util.Random
 class UdpServer extends Actor with ActorLogging with Timers {
   import UdpServer._
   import context.system
+  import context.dispatcher
+
   IO(Udp) ! Udp.Bind(self, new InetSocketAddress("0.0.0.0", 4124))
 
   var proxies = Map.empty[MAC,InetSocketAddress]
@@ -78,7 +80,7 @@ class UdpServer extends Actor with ActorLogging with Timers {
         if (proxies.get(address) != Some(src)) {
           proxies = proxies + (address -> src)
           log.info("Received Ping from {} at {}:{}, seen {}", address, src.getHostName, src.getPort,
-            proxies.values.map(_.getHostName).mkString(", "))
+            proxies.map(t => t._1 + " -> " + t._2.getAddress()).mkString(", "))
         }
 
       // TODO re-flash doorbell as a normal TxState "momentary button" class
@@ -93,6 +95,8 @@ class UdpServer extends Actor with ActorLogging with Timers {
         }
       case msg@SendDoorbell =>
         log.warning("Not sending {} to doorbell, since no proxy known for it", msg)
+      case Udp.Received(SentAck(_), _) =>
+        // we ignore acks that we sent out ourselves; they are just echoed back by other proxies.
       case Udp.Received(data, remote) =>
         log.debug("Unhandled {} from {}", data, remote)
       case Udp.Unbind  ⇒ socket ! Udp.Unbind
@@ -107,7 +111,8 @@ class UdpServer extends Actor with ActorLogging with Timers {
         log.info("Sending {} bytes to {}", payload.length, proxies(mac).getHostName)
         socket ! Udp.Send(payload, proxies(mac))
       case msg:SendFS20 =>
-        log.warning("Not sending {}, since proxy is not available", msg)
+        log.warning("Not sending {}, since proxy is not available. Known are {}", msg,
+          proxies.keySet.mkString(", "))
 
       case SendAck(ack) if preferredProxies.contains(ack.nodeId) =>
         val addr = randomProxy(ack.nodeId)
@@ -115,13 +120,20 @@ class UdpServer extends Actor with ActorLogging with Timers {
         socket ! Udp.Send(ByteString('R', 5) ++ ByteString(ack.toByteArray), addr)
       case SendAck(ack) =>
         log.warning("No proxy known for ack {}", ack)
+
       case SendPacket(pkt) if preferredProxies.contains(pkt.nodeId) =>
-        // FIXME re-choose between all proxies or one random one.
-        for (addr <- preferredProxies(pkt.nodeId)) {
-          socket ! Udp.Send(ByteString('R', 2) ++ ByteString(pkt.toByteArray), addr)
+        val targets = Random.shuffle(preferredProxies(pkt.nodeId).toSeq)
+        log.debug("Sending {} bytes to {}", pkt.body.map(_.size).getOrElse(0), targets.map(_.getHostName()))
+        for ((addr, i) <- targets.zipWithIndex) {
+          val msg = Udp.Send(ByteString('R', 2) ++ ByteString(pkt.toByteArray), addr)
+          if (i == 0) {
+            socket ! msg
+          } else {
+            context.system.scheduler.scheduleOnce(i * 100.milliseconds, socket, msg)
+          }
         }
       case SendPacket(pkt) =>
-        log.warning("No proxy known for packet {}", pkt.nodeId)
+        log.warning("No proxy known for nodeId {}", pkt.nodeId)
 
       case RemovePreferred(nodeId, addr) =>
         log.warning("Removing preferred proxy for {} at {}", nodeId, addr)
@@ -181,6 +193,7 @@ object UdpServer {
   private val ReceivedFS20 = WithHeader('F')
   private val ReceivedPacket = WithHeader('R',3) // Packet from node to spark. Spark to node has header 2.
   private val ReceivedAck = WithHeader('R',1)    // Ack from node to spark. Spark to node has header 5.
+  private val SentAck = WithHeader('R', 5)
   private val ReceivedPing = WithHeader('Q')
   private val ReceivedMessage = WithHeader('R',42)
   private val ReceivedDoorbell = WithHeader('R',2,'D','B',' ',' ')
