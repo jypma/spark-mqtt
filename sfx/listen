@@ -1,3 +1,4 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 mosquitto_sub -h deepsleep.lan -t "sfx" -C 1 | xargs -d$'\n' -L1 bash -c 'aplay $0'
+sleep 5
