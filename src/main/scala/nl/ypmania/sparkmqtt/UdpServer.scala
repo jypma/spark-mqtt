@@ -9,8 +9,10 @@ import nl.ypmania.sparkmqtt.data.Messages.{ Ack, Packet }
 import scala.collection.immutable.HashSet
 import scala.concurrent.duration._
 import scala.util.Random
+import github.gphat.censorinus.StatsDClient
+import nl.ypmania.sparkmqtt.data.Messages.Ping
 
-class UdpServer extends Actor with ActorLogging with Timers {
+class UdpServer(stats: StatsDClient) extends Actor with ActorLogging with Timers {
   import UdpServer._
   import context.system
   import context.dispatcher
@@ -82,6 +84,8 @@ class UdpServer extends Actor with ActorLogging with Timers {
           log.info("Received Ping from {} at {}:{}, seen {}", address, src.getHostName, src.getPort,
             proxies.map(t => t._1 + " -> " + t._2.getAddress()).mkString(", "))
         }
+        val add = address.toString.replaceAll(":","")
+        sendStats(s"proxy.${add}", ping)
 
       // TODO re-flash doorbell as a normal TxState "momentary button" class
       case Udp.Received(ReceivedDoorbell(body), src) =>
@@ -152,6 +156,13 @@ class UdpServer extends Actor with ActorLogging with Timers {
   def preferProxy(nodeId: Int, addr: InetSocketAddress): Unit = {
     preferredProxies += nodeId -> (preferredProxies.getOrElse(nodeId, HashSet.empty) + addr)
     timers.startSingleTimer((nodeId, addr), RemovePreferred(nodeId, addr), 24.hours)
+  }
+
+  def sendStats(prefix: String, ping: Ping): Unit = {
+    stats.increment(s"$prefix.packetsOut", ping.packetsOut.getOrElse(0): Int)
+    stats.increment(s"$prefix.packetsIn", ping.packetsIn.getOrElse(0): Int)
+    stats.increment(s"$prefix.rfmWatchdogs", ping.rfmWatchdogs.getOrElse(0): Int)
+    stats.increment(s"$prefix.espWatchdogs", ping.espWatchdogs.getOrElse(0): Int)
   }
 }
 

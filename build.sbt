@@ -1,4 +1,4 @@
-version := "0.1.20190930"
+version := "0.1.20191013"
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.5.21",
@@ -11,7 +11,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http" % "10.1.7",
   "com.typesafe.akka" %% "akka-http-testkit" % "10.1.7" % Test,
   "com.github.os72" % "protobuf-dynamic" % "0.9.3",
-  "org.json4s" %% "json4s-native" % "3.6.5"
+  "org.json4s" %% "json4s-native" % "3.6.5",
+  "com.github.gphat" %% "censorinus" % "2.1.13"
 )
 
 scalaVersion := "2.12.8"
